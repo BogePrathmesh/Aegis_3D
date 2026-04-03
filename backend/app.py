@@ -6,6 +6,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import uuid
 import json
+import budget_db
 
 app = Flask(__name__)
 CORS(app)
@@ -193,9 +194,78 @@ def serve_depth(filename):
     return send_from_directory(DEPTH_FOLDER, filename)
 
 
+@app.route("/api/structures", methods=["GET"])
+def get_structures():
+    return jsonify(budget_db.get_all_structures())
+
+@app.route("/api/optimize-budget", methods=["POST"])
+def optimize_budget_endpoint():
+    data = request.json or {}
+    budget = float(data.get("budget", 50))
+    result = budget_db.optimize_budget(budget)
+    return jsonify(result)
+
+import simulation_engine
+
+@app.route("/api/simulate/<int:structure_id>", methods=["GET"])
+def run_simulation(structure_id):
+    result = simulation_engine.simulate_structure(structure_id, BASE_DIR)
+    return jsonify(result)
+
+@app.route("/api/frames/<filename>")
+def serve_frames(filename):
+    return send_from_directory(FRAMES_FOLDER, filename)
+
+@app.route("/api/simulate-upload/<session_id>", methods=["GET"])
+def run_upload_simulation(session_id):
+    # Find assets for this session
+    orig_path = None
+    for ext in ["png", "jpg", "jpeg"]:
+        p = os.path.join(UPLOAD_FOLDER, f"{session_id}_original.{ext}")
+        if os.path.exists(p):
+            orig_path = p
+            break
+            
+    mask_path = os.path.join(MASK_FOLDER, f"{session_id}_mask.png")
+    
+    if not (orig_path and os.path.exists(mask_path)):
+        return jsonify({"error": "Assets not found for session"}), 404
+        
+    # Analyze initial props for simulation parameters
+    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+    props = analyze_crack_properties(mask)
+    
+    # Generic init data for an upload
+    init_data = {
+        "crack_length": props['length'],
+        "crack_width": props['width'],
+        "crack_depth": props['depth'],
+        "health_score": 100.0 - (props['severity'] * 50), # Rough initial health
+        "age": 10 # Default age for unknown uploads
+    }
+    
+    result = simulation_engine.simulate_by_assets(
+        BASE_DIR, 
+        orig_path, 
+        mask_path, 
+        None, 
+        init_data, 
+        output_prefix=f"sim_upload_{session_id}"
+    )
+    
+    # Mock structure data for frontend
+    result['structure'] = {
+        "id": session_id,
+        "structure_name": f"Session {session_id}",
+        "structure_type": "Uploaded Asset",
+        "health_score": init_data["health_score"]
+    }
+    
+    return jsonify(result)
+
 @app.route("/api/health")
 def health():
-    return jsonify({"status": "ok", "message": "Structural Degradation API running"})
+    return jsonify({"status": "ok", "message": "Structural Degradation API running", "budget_db": "connected"})
 
 
 if __name__ == "__main__":
