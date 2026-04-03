@@ -1,0 +1,248 @@
+import React, { useState, useEffect, useRef } from 'react';
+import ImageUpload from './ImageUpload';
+import AssetHealthDashboard from './AssetHealthDashboard';
+
+export default function Simulator() {
+  const [structures, setStructures] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [simulationData, setSimulationData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [year, setYear] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    fetch('/api/budget/')
+      .then(res => res.json())
+      .then(data => {
+        setStructures(data);
+        if (data.length > 0 && !selectedId) {
+          setSelectedId(data[0].id);
+        }
+      })
+      .catch(err => console.error("Failed to load structures", err));
+  }, []);
+
+  const runSimulation = (id) => {
+    const targetId = id || selectedId;
+    if (!targetId) return;
+    setLoading(true);
+    setSimulationData(null);
+    setYear(0);
+    setIsPlaying(false);
+    
+    fetch(`/api/simulation/simulate/${targetId}`)
+      .then(res => res.json())
+      .then(data => {
+        setSimulationData(data);
+        setLoading(false);
+        setShowUpload(false);
+      })
+      .catch(err => {
+        console.error("Simulation failed", err);
+        setLoading(false);
+      });
+  };
+
+  const handleUploadComplete = (uploadData) => {
+    setLoading(true);
+    setSimulationData(null);
+    setYear(0);
+    setIsPlaying(false);
+    
+    // Call the NEW simulate-upload endpoint
+    fetch(`/api/simulation/simulate-upload/${uploadData.sessionId}`)
+      .then(res => res.json())
+      .then(data => {
+        setSimulationData(data);
+        setLoading(false);
+        setShowUpload(false);
+      })
+      .catch(err => {
+        console.error("Upload simulation failed", err);
+        setLoading(false);
+      });
+  };
+
+  // Auto-play logic
+  useEffect(() => {
+    if (isPlaying) {
+      timerRef.current = setInterval(() => {
+        setYear(prev => {
+          if (prev >= 10) {
+            setIsPlaying(false);
+            return 10;
+          }
+          return prev + 1;
+        });
+      }, 400); // Faster increment since we have 11 frames
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [isPlaying]);
+
+  const togglePlay = () => {
+    if (year >= 10) setYear(0);
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSlider = (e) => {
+    setYear(parseInt(e.target.value));
+    setIsPlaying(false);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginTop: 12 }}>
+      
+      {/* INITIAL STATE: VISUAL GALLERY */}
+      {!simulationData && !loading && !showUpload && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto' }}>
+            <h2 style={{ fontFamily: 'Orbitron', fontSize: 24, marginBottom: 8, color: 'var(--accent-cyan)' }}>SELECT ASSET FOR ANALYSIS</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Choose an infrastructure asset from the registry to begin the deep-growth degradation simulation.</p>
+          </div>
+          
+          <div className="flex justify-center mb-12">
+            <div 
+              onClick={() => setShowUpload(true)}
+              className="glass-card border-2 border-dashed border-slate-300 hover:border-primary/50 transition-colors flex flex-col items-center justify-center p-8 text-center cursor-pointer w-full max-w-lg min-h-[180px]"
+            >
+              <div className="text-4xl mb-4">📤</div>
+              <div className="text-lg font-bold text-slate-800 mb-2">UPLOAD RAW FOOTAGE</div>
+              <div className="text-sm text-slate-500">Process new inspections using AI crack detector</div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+            {structures.map(s => (
+              <div 
+                key={s.id} 
+                className="glass-card" 
+                onClick={() => runSimulation(s.id)}
+                style={{ 
+                  padding: '24px', 
+                  cursor: 'pointer', 
+                  background: 'rgba(13, 21, 40, 0.4)', 
+                  border: '1px solid var(--border)',
+                  borderRadius: 20,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#111', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, border: '1px solid rgba(255,255,255,0.1)' }}>
+                     <img 
+                        src={`/static/cp/${s.structure_name}.jpg`} 
+                        alt="" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = s.structure_type === 'Bridge' ? '🌉' : s.structure_type === 'Road' ? '🛣️' : '🏢';
+                        }}
+                     />
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Health Score</div>
+                    <div style={{ fontFamily: 'Orbitron', fontSize: 18, color: s.health_score > 60 ? 'var(--health-green)' : 'var(--health-orange)' }}>{Math.round(s.health_score)}</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 16, color: '#fff' }}>{s.structure_name}</h4>
+                  <div style={{ fontSize: 11, color: 'var(--accent-blue)', marginTop: 2 }}>{s.structure_type} · {s.location}</div>
+                </div>
+                <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>PRIORITY: <b>{Math.round(s.priority_score)}</b></span>
+                   <span style={{ fontSize: 10, color: 'var(--accent-cyan)', fontWeight: 800 }}>RUN SIMULATION →</span>
+                </div>
+              </div>
+            ))}
+            
+
+
+          </div>
+        </div>
+      )}
+
+      {showUpload && !simulationData && !loading && (
+        <div style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+               <button onClick={() => setShowUpload(false)} className="btn-secondary" style={{ borderRadius: 20 }}>← BACK TO REGISTRY</button>
+            </div>
+           <ImageUpload onImageLoaded={handleUploadComplete} />
+        </div>
+      )}
+
+      {loading && (
+        <div className="loading-card" style={{ margin: '80px auto', maxWidth: 400 }}>
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Deep Analysis in Progress...</div>
+          <div className="loading-subtitle">Extending Crack Skeletons · Simulating Spalling</div>
+        </div>
+      )}
+
+      {simulationData && !loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24 }}>
+          
+          {/* LEFT: VISUALIZATION */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* CANVAS */}
+            <div className="sim-panel glow-panel" style={{ padding: 12, position: 'relative', height: 500, display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', background: '#080808', border: '1px solid var(--border-glow)' }}>
+               <img 
+                 src={simulationData.frames[year]} 
+                 alt={`Year ${year}`} 
+                 style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4, transition: 'all 0.3s ease-in-out' }}
+               />
+               <div style={{ position: 'absolute', top: 24, left: 24, background: 'rgba(0,0,0,0.8)', padding: '8px 16px', borderRadius: 8, border: '1px solid var(--accent-cyan)', boxShadow: '0 0 15px rgba(0,212,255,0.4)' }}>
+                  <div style={{ fontSize: 10, color: 'var(--accent-cyan)', fontWeight: 800, letterSpacing: 2, marginBottom: 2 }}>FORECAST</div>
+                  <div style={{ color: '#fff', fontFamily: "'Orbitron', monospace", fontSize: 18, fontWeight: 700 }}>YEAR {(year / 2).toFixed(1)}</div>
+               </div>
+               
+               <div style={{ position: 'absolute', bottom: 24, right: 24, background: 'rgba(0,0,0,0.7)', padding: '10px 16px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12 }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 10, textTransform: 'uppercase', marginBottom: 4 }}>Asset info</div>
+                  <div style={{ color: '#fff', fontWeight: 600 }}>{simulationData.structure.structure_name}</div>
+                  <div style={{ color: 'var(--accent-blue)', fontSize: 11 }}>{simulationData.structure.structure_type}</div>
+               </div>
+            </div>
+            
+            {/* TIMELINE CONTROLS */}
+            <div className="sim-panel" style={{ padding: '24px 32px', display: 'flex', alignItems: 'center', gap: 28 }}>
+              <button 
+                onClick={togglePlay}
+                style={{ width: 56, height: 56, borderRadius: '50%', background: isPlaying ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 212, 255, 0.15)', color: isPlaying ? '#ef4444' : 'var(--accent-cyan)', border: `2px solid ${isPlaying ? '#ef4444' : 'var(--accent-cyan)'}`, fontSize: 20, display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: isPlaying ? '0 0 20px rgba(239, 68, 68, 0.3)' : '0 0 20px rgba(0, 212, 255, 0.3)' }}
+              >
+                {isPlaying ? '⏸' : '▶'}
+              </button>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#475569', letterSpacing: 1 }}>TEMPORAL SLIDER</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--accent-cyan)' }}>YEAR {(year / 2).toFixed(1)}</span>
+                </div>
+                <input 
+                  type="range" min="0" max="10" step="1" 
+                  value={year} 
+                  onChange={handleSlider}
+                  style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent-cyan)', height: 6, borderRadius: 3, background: 'rgba(0,0,0,0.2)', appearance: 'none' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, color: '#4b5563', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  <span>Baseline (Y0)</span>
+                  <span>Accelerated Degradation (Y5)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: METRICS PANEL */}
+          <div style={{ width: 340, flexShrink: 0 }}>
+            <div style={{ marginBottom: 16 }}>
+               <button onClick={() => setSimulationData(null)} className="btn-secondary" style={{ width: '100%', borderRadius: 12, border: '1px solid var(--border)' }}>← EXIT SIMULATION</button>
+            </div>
+            <AssetHealthDashboard data={simulationData.yearly_data[year]} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

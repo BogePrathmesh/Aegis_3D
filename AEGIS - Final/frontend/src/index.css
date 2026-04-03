@@ -1,0 +1,67 @@
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-body bg-surface text-on-surface antialiased;
+    /* Ensure No italic font is globally applied */
+    font-style: normal !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
+  }
+  
+  /* Remove system italics */
+  em, i, cite, address {
+    font-style: normal;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant/10 shadow-sm rounded-2xl;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-on-primary px-8 py-3 rounded-lg font-semibold shadow-sm hover:brightness-95 transition-all
+           hover:translate-y-[-1px] active:translate-y-[0px] flex items-center gap-2;
+  }
+  
+  .btn-secondary {
+    @apply px-8 py-3 text-on-surface font-semibold border-2 border-slate-200 rounded-lg hover:bg-white transition-colors flex items-center gap-2;
+  }
+
+  .nav-link {
+    @apply text-slate-600 font-medium hover:text-primary transition-colors duration-300 font-headline tracking-tight text-lg relative pb-1;
+  }
+  
+  .nav-link.active {
+    @apply text-primary border-b-2 border-primary;
+  }
+  
+  .hero-headline {
+    @apply text-6xl md:text-[84px] leading-[0.95] tracking-tight mb-8 text-on-surface font-headline;
+  }
+}
+
+/* Custom Micro-Typography from ref */
+.label-sm {
+  @apply text-[11px] font-bold tracking-[0.2em] uppercase;
+}
+
+/* Plotly customization */
+.js-plotly-plot, .plotly, .modebar {
+  display: flex !important;
+}
+
+/* Plotly card layout */
+.plotly-container {
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  border-radius: 1rem;
+}
