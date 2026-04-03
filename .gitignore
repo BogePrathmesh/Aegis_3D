@@ -1,0 +1,24 @@
+# Large datasets
+data/DATA_Maguire_20180517_ALL/
+data/archive1/
+data/archive2/
+*.zip
+
+# Generated
+data/uploads/
+data/simulation_frames/
+data/masks/
+data/depth/
+
+# Python
+__pycache__/
+*.pyc
+*.pkl
+*.pt
+*.pth
+
+# Node
+node_modules/
+
+# Env
+.env
