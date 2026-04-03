@@ -30,7 +30,10 @@ def init_db():
             replacement_cost REAL,
             traffic_load TEXT,
             age INTEGER,
-            priority_score REAL
+            priority_score REAL,
+            latitude REAL,
+            longitude REAL,
+            gps_status TEXT
         )
     ''')
     
@@ -83,11 +86,19 @@ def insert_record(cursor, row):
     age_factor = min(age, 50)
     priority_score = (0.5 * risk_score) + (0.3 * traffic_weight) + (0.2 * age_factor)
     
+    # Coordinate extraction
+    latitude = float(row.get('latitude', 18.5204))
+    longitude = float(row.get('longitude', 73.8567))
+    gps_status = row.get('gps_status', 'active' if 'latitude' in row else 'fallback')
+
     cursor.execute('''
         INSERT INTO structures (structure_name, structure_type, location, crack_length, crack_width, crack_depth,
-        severity_score, health_score, risk_score, repair_cost, replacement_cost, traffic_load, age, priority_score)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (structure_name, structure_type, location, crack_length, crack_width, crack_depth, severity_score, health_score, risk_score, repair_cost, replacement_cost, traffic_load, age, priority_score))
+        severity_score, health_score, risk_score, repair_cost, replacement_cost, traffic_load, age, priority_score,
+        latitude, longitude, gps_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (structure_name, structure_type, location, crack_length, crack_width, crack_depth, 
+          severity_score, health_score, risk_score, repair_cost, replacement_cost, traffic_load, age, priority_score,
+          latitude, longitude, gps_status))
 
 def compute_repair_impact(s):
     # Impact Model (Physical Dimension Reduction)

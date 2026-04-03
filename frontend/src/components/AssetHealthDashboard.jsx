@@ -1,4 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default Leaflet marker icons not loading in React
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Sub-component to fly map to new center when coordinates change
+function RecenterMap({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([lat, lng], 13);
+  }, [lat, lng, map]);
+  return null;
+}
 
 const getStatusColor = (risk) => {
   if (risk >= 80) return '#ef4444'; // Red
@@ -143,7 +168,50 @@ export default function AssetHealthDashboard({ data }) {
         <MetricTile label="Severity" value={severity.toFixed(2)} unit="/ 5" color="#f59e0b" icon="⚠️" />
       </div>
 
-      {/* SECTION 4: AI FORECAST HINT */}
+      {/* SECTION 4: GEOSPATIAL DEFECT LOCATION */}
+      <div className="glass-card" style={{ 
+        padding: '16px', 
+        background: 'rgba(13, 21, 40, 0.4)',
+        borderRadius: '20px',
+        border: '1px solid rgba(255,255,255,0.08)',
+        height: '240px',
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 800, letterSpacing: '1px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+           <span style={{ fontSize: '12px' }}>📍</span> GEOSPATIAL DEFECT MAPPING
+           {data.gps_status === 'fallback' && <span style={{ color: '#f59e0b', fontSize: '9px', fontWeight: 600 }}>(SIMULATED)</span>}
+        </div>
+        
+        <div style={{ height: '180px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+          {data.latitude && data.longitude ? (
+            <MapContainer 
+              center={[data.latitude, data.longitude]} 
+              zoom={13} 
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker position={[data.latitude, data.longitude]} />
+              <RecenterMap lat={data.latitude} lng={data.longitude} />
+            </MapContainer>
+          ) : (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+              NO GEODATA AVAILABLE
+            </div>
+          )}
+        </div>
+        
+        <div style={{ marginTop: '8px', fontSize: '9px', color: 'rgba(255,255,255,0.3)', display: 'flex', justifyContent: 'space-between' }}>
+           <span>{data.latitude?.toFixed(5)}, {data.longitude?.toFixed(5)}</span>
+           <span style={{ color: data.gps_status === 'active' ? '#10b981' : '#f59e0b' }}>GPS_STATUS: {data.gps_status || 'N/A'}</span>
+        </div>
+      </div>
+
+      {/* SECTION 5: AI FORECAST HINT */}
       <div style={{ 
         padding: '12px', 
         borderRadius: '12px', 

@@ -8,7 +8,7 @@ from budget_db import DB_PATH
 
 def simulate_by_assets(base_dir, orig_file, mask_file_path, depth_file, init_data, output_prefix="sim_upload"):
     """Core simulation engine that works on any provided image/mask assets."""
-    frames_dir = os.path.normpath(os.path.join(base_dir, 'data', 'simulation_frames'))
+    frames_dir = os.path.normpath(os.path.join(base_dir, 'Data', 'simulation_frames'))
     os.makedirs(frames_dir, exist_ok=True)
     
     frame_urls = []
@@ -19,6 +19,11 @@ def simulate_by_assets(base_dir, orig_file, mask_file_path, depth_file, init_dat
     D0 = init_data.get('crack_depth', 10)
     health_initial = init_data.get('health_score', 80)
     age = init_data.get('age', 10)
+    
+    # Propagate GPS coordinates for mapping
+    lat = init_data.get('latitude', 18.5204)
+    lng = init_data.get('longitude', 73.8567)
+    gps_status = init_data.get('gps_status', 'fallback')
     
     for t in range(6): # Years 0 to 5
         # 3. CRACK GROWTH MODEL
@@ -54,7 +59,10 @@ def simulate_by_assets(base_dir, orig_file, mask_file_path, depth_file, init_dat
             "health": round(health_t, 2),
             "risk": round(risk_t, 2),
             "risk_level": risk_level,
-            "failure_probability": round(fail_prob * 100, 2)
+            "failure_probability": round(fail_prob * 100, 2),
+            "latitude": lat,
+            "longitude": lng,
+            "gps_status": gps_status
         })
         
         # VISUAL SIMULATION
@@ -126,7 +134,7 @@ def simulate_structure(structure_id, base_dir):
     s = dict(row)
     
     # Asset mapping (same logic as before)
-    masks_dir = os.path.join(base_dir, 'data', 'masks')
+    masks_dir = os.path.join(base_dir, 'Data', 'masks')
     mask_files = sorted([f for f in os.listdir(masks_dir) if f.endswith('_mask.png')])
     
     if len(mask_files) > 0:
@@ -134,19 +142,24 @@ def simulate_structure(structure_id, base_dir):
         mask_file_name = mask_files[idx]
         session_id = mask_file_name.split('_mask')[0]
         mask_path = os.path.join(masks_dir, mask_file_name)
-        orig_path = os.path.join(base_dir, 'data', 'uploads', f"{session_id}_original.png")
+        orig_path = os.path.join(base_dir, 'Data', 'uploads', f"{session_id}_original.png")
         if not os.path.exists(orig_path):
             # Try jpg
-            orig_path = os.path.join(base_dir, 'data', 'uploads', f"{session_id}_original.jpg")
+            orig_path = os.path.join(base_dir, 'Data', 'uploads', f"{session_id}_original.jpg")
     else:
         mask_path = orig_path = None
 
-    res = simulate_by_assets(base_dir, orig_path, mask_path, None, {
+    init_params = {
         "crack_length": s['crack_length'],
         "crack_width": s['crack_width'],
         "crack_depth": s['crack_depth'],
         "health_score": s['health_score'],
-        "age": s['age']
-    }, output_prefix=f"sim_struct_{structure_id}")
+        "age": s['age'],
+        "latitude": s.get('latitude', 18.5204),
+        "longitude": s.get('longitude', 73.8567),
+        "gps_status": s.get('gps_status', 'fallback')
+    }
+
+    res = simulate_by_assets(base_dir, orig_path, mask_path, None, init_params, output_prefix=f"sim_struct_{structure_id}")
     res['structure'] = s
     return res

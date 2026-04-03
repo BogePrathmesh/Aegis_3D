@@ -10,23 +10,21 @@ export default function ImageUpload({ onImageLoaded }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  const processFile = useCallback(async (file) => {
-    if (!file) return;
+  const processFiles = useCallback(async (files) => {
+    if (!files || files.length === 0) return;
     setError('');
     setLoading(true);
 
-    // Local preview (instant)
-    const localURL = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {};
-    img.src = localURL;
-
     try {
       const fd = new FormData();
-      fd.append('image', file);
+      // Append all files to the 'image' key
+      for (let i = 0; i < files.length; i++) {
+        fd.append('image', files[i]);
+      }
+
       const { data } = await axios.post(`${API}/upload`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 30000,
+        timeout: 60000, // Longer timeout for stitching
       });
 
       const uploadedImg = new Image();
@@ -34,62 +32,40 @@ export default function ImageUpload({ onImageLoaded }) {
       uploadedImg.onload = () => {
         onImageLoaded({
           element:    uploadedImg,
-          localURL,
-          filename:   data.filename,
           sessionId:  data.session_id,
+          filename:   data.filename,
           maskUrl:    data.mask_filename ? `${API}/masks/${data.mask_filename}` : null,
           depthUrl:   data.depth_filename ? `${API}/depth/${data.depth_filename}` : null,
           crackProps: data.crack_properties,
           width:      data.width,
           height:     data.height,
+          latitude:   data.latitude,
+          longitude:  data.longitude,
+          gpsStatus:  data.gps_status
         });
         setLoading(false);
       };
-      uploadedImg.onerror = () => {
-        // fallback: use local URL
-        const fallbackImg = new Image();
-        fallbackImg.onload = () => {
-          onImageLoaded({
-            element:    fallbackImg,
-            localURL,
-            filename:   data.filename,
-            sessionId:  data.session_id,
-            crackProps: data.crack_properties,
-          });
-          setLoading(false);
-        };
-        fallbackImg.src = localURL;
-      };
-      uploadedImg.src = `${API}/uploads/${data.filename}`;
+      
+      const baseUrl = `${API}/uploads/${data.filename}`;
+      uploadedImg.src = baseUrl;
 
     } catch (err) {
-      console.warn('Backend unavailable, running in offline mode');
-      // Offline / demo mode — still works without backend
-      const offlineImg = new Image();
-      offlineImg.onload = () => {
-        onImageLoaded({
-          element:    offlineImg,
-          localURL,
-          filename:   file.name,
-          sessionId:  'offline',
-          crackProps: null,
-        });
-        setLoading(false);
-      };
-      offlineImg.src = localURL;
+      console.error('Upload failed:', err);
+      setError('Upload or Stitching failed. Please check backend connection.');
+      setLoading(false);
     }
   }, [onImageLoaded]);
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
     setDrag(false);
-    const file = e.dataTransfer.files[0];
-    if (file) processFile(file);
-  }, [processFile]);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) processFiles(files);
+  }, [processFiles]);
 
   const onFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) processFile(file);
+    const files = e.target.files;
+    if (files.length > 0) processFiles(files);
   };
 
   return (
@@ -105,12 +81,12 @@ export default function ImageUpload({ onImageLoaded }) {
           {loading ? '⏳' : '🏗️'}
         </div>
         <h2 className="upload-title">
-          {loading ? 'Analysing Infrastructure Image…' : 'Upload Infrastructure Image'}
+          {loading ? 'Analysing Infrastructure Data…' : 'Upload Drone Imagery'}
         </h2>
         <p className="upload-desc">
           {loading
-            ? 'Detecting cracks · Generating depth map · Preparing simulation…'
-            : 'Drag & drop or click to select a bridge, road, or building image with visible cracks. The system will simulate structural degradation over time.'
+            ? 'Stitching Sequences · Detecting cracks · Generating depth map…'
+            : 'Select multiple overlapping drone images for Orthomosaic stitching, or a single asset image for immediate deep analysis.'
           }
         </p>
         {!loading && (
@@ -131,6 +107,7 @@ export default function ImageUpload({ onImageLoaded }) {
         ref={inputRef}
         type="file"
         accept={ACCEPTED}
+        multiple
         style={{ display: 'none' }}
         onChange={onFileChange}
       />
