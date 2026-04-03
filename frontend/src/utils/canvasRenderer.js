@@ -1,5 +1,5 @@
 /**
- * AEGIA 3D — Canvas 2D Renderer
+ * AEGIS 3D — Canvas 2D Renderer
  * Draws the structural degradation simulation frame by frame.
  */
 
@@ -69,26 +69,40 @@ export function drawFrame(ctx, image, maskImg, manualCracks, simParams, t, cW, c
 // 1. REAL CRACK DAMAGE (Using Mask)
 // ─────────────────────────────────────────────────────────────────────────────
 function drawRealCrackDamage(ctx, maskImg, ss, t, cW, cH) {
-  if (t === 0) return; // Baseline has no added visual degradation
+  if (t === 0 || cW === 0 || cH === 0) return; // Baseline has no added visual degradation
 
   const alpha = Math.min(0.85, t * 0.18 + 0.1);
   const iterations = Math.floor(t * 1.5) + (t > 2 ? 1 : 0);
 
   ctx.save();
   
-  // Create an offscreen canvas to turn the white mask into a black alpha crack
+  // Create an offscreen canvas to process the mask
   const oc = document.createElement('canvas');
   oc.width = cW; oc.height = cH;
   const octx = oc.getContext('2d');
   
-  // Fill with the dark crack colour (deep grey/black)
-  const depthDark = Math.max(0, 20 - t * 4);
-  octx.fillStyle = `rgba(${depthDark},${depthDark},${depthDark},${alpha})`;
-  octx.fillRect(0, 0, cW, cH);
-  
-  // Destination-in keeps only the parts where the mask is non-transparent (white)
-  octx.globalCompositeOperation = 'destination-in';
+  // Draw the mask (black background, white cracks)
   octx.drawImage(maskImg, 0, 0, cW, cH);
+  
+  // Extract pixels to make background transparent and cracks dark
+  const imgData = octx.getImageData(0, 0, cW, cH);
+  const data = imgData.data;
+  const depthDark = Math.max(0, 20 - t * 4);
+  
+  for (let i = 0; i < data.length; i += 4) {
+    const brightness = data[i]; // check Red channel
+    if (brightness > 30) {
+      // Is a crack: set to deep dark and scale alpha by mask brightness
+      data[i]     = depthDark;
+      data[i+1]   = depthDark;
+      data[i+2]   = depthDark;
+      data[i+3]   = Math.floor(255 * alpha * (brightness / 255));
+    } else {
+      // Is background: make transparent
+      data[i+3]   = 0;
+    }
+  }
+  octx.putImageData(imgData, 0, 0);
 
   // Draw the isolated crack multiple times with offset to simulate widening (W(t))
   ctx.globalCompositeOperation = 'multiply';
@@ -371,23 +385,22 @@ export function buildDepthMap(simParams, t, w, h, maskImg, manualCracks) {
 
   const ss = computeSimState(simParams, t);
 
-  if (maskImg) {
-    // If we have a mask, draw the mask to carve the depth!
-    // The mask is white on black, we want cracks to be dark (low z) and rest grey.
-    // So we can draw the original mask black where white...
+  if (maskImg && w > 0 && h > 0) {
+    // We want the depth map base to be `#888`
     const maskCanvas = document.createElement('canvas');
     maskCanvas.width = w; maskCanvas.height = h;
     const mctx = maskCanvas.getContext('2d');
     
-    // Draw black
-    mctx.fillStyle = '#0a0a0a';
+    // Draw white background
+    mctx.fillStyle = '#fff';
     mctx.fillRect(0,0,w,h);
-    // Use mask to cut out black lines
-    mctx.globalCompositeOperation = 'destination-in';
+    
+    // Difference with the mask (black bg, white cracks). This creates white bg, black cracks.
+    mctx.globalCompositeOperation = 'difference';
     mctx.drawImage(maskImg, 0, 0, w, h);
     
-    // Now draw those black lines onto the grey depth map
-    // Grow the thickness over time
+    // Multiply black cracks over the #888 grey surface
+    ctx.globalCompositeOperation = 'multiply';
     const iterations = Math.floor(t * 1.5);
     for (let dx = -iterations; dx <= iterations; dx++) {
       for (let dy = -iterations; dy <= iterations; dy++) {

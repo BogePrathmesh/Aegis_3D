@@ -1,5 +1,5 @@
 /**
- * AEGIA 3D — Engineering Crack Growth Simulation Engine
+ * AEGIS 3D — Engineering Crack Growth Simulation Engine
  * Quadratic crack growth model with structural health / risk / failure scoring
  */
 

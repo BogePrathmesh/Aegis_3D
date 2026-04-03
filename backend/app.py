@@ -30,36 +30,40 @@ def allowed_file(filename):
 
 
 def generate_crack_mask(image_path):
-    """Auto-detect cracks using edge detection and thresholding."""
+    """Auto-detect cracks and filter out background noise (like asphalt texture)."""
     img = cv2.imread(image_path)
     if img is None:
         return None
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Enhance contrast
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
+    # Use a bilateral filter to smooth noise while keeping edges sharp
+    smoothed = cv2.bilateralFilter(gray, 9, 75, 75)
+    
+    # Adaptive thresholding to find deep cracks
+    thresh = cv2.adaptiveThreshold(smoothed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                   cv2.THRESH_BINARY_INV, 15, 5)
 
-    # Edge detection
-    edges = cv2.Canny(enhanced, 50, 150)
-
-    # Morphological operations to connect crack segments
+    # Morphological operations to link cracks and remove small dots
     kernel = np.ones((3, 3), np.uint8)
-    dilated = cv2.dilate(edges, kernel, iterations=2)
-    closed = cv2.morphologyEx(dilated, cv2.MORPH_CLOSE, kernel, iterations=3)
+    opened = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
+    closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel, iterations=2)
 
-    # Find crack-like thin structures using tophat
-    kernel_large = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
-    tophat = cv2.morphologyEx(enhanced, cv2.MORPH_BLACKHAT, kernel_large)
-    _, thresh = cv2.threshold(tophat, 30, 255, cv2.THRESH_BINARY)
-
-    # Combine edge and tophat
-    combined = cv2.bitwise_or(closed, thresh)
-
-    # Remove noise
-    combined = cv2.GaussianBlur(combined, (3, 3), 0)
-    _, final_mask = cv2.threshold(combined, 50, 255, cv2.THRESH_BINARY)
+    # Find contours to filter out small asphalt noise
+    contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    final_mask = np.zeros_like(gray)
+    
+    if contours:
+        # Keep only contours above a certain area threshold
+        # Or sort them and keep the top N largest
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+        # Keep top 10 largest features or those with Area > 100
+        for cnt in contours[:10]:
+            if cv2.contourArea(cnt) > 50:
+                cv2.drawContours(final_mask, [cnt], -1, 255, thickness=cv2.FILLED)
+                # optionally draw line matching the contour to widen it a bit
+                cv2.drawContours(final_mask, [cnt], -1, 255, thickness=2)
 
     return final_mask
 

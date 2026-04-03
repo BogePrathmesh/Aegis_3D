@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { drawFrame, buildDepthMap } from '../utils/canvasRenderer';
 import { deriveParams } from '../utils/crackSimulation';
 

@@ -1,4 +1,4 @@
-// AEGIA 3D — v2.0 Data-Driven Structural Degradation Simulation
+// AEGIS 3D — v2.0 Data-Driven Structural Degradation Simulation
 import React, { useState, useCallback, useRef } from 'react';
 import './index.css';
 
@@ -142,7 +142,7 @@ export default function App() {
       <header className="app-header">
         <div className="header-icon">🏗️</div>
         <div>
-          <div className="header-title">AEGIA · 3D</div>
+          <div className="header-title">AEGIS · 3D</div>
           <div className="header-subtitle">Data-Driven Structural Degradation Simulation</div>
         </div>
         {image && (
