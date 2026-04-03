@@ -33,7 +33,10 @@ export default function Simulator() {
     setIsPlaying(false);
     
     fetch(`http://localhost:5000/api/simulate/${targetId}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Simulation failed: ${res.statusText}`);
+        return res.json();
+      })
       .then(data => {
         setSimulationData(data);
         setLoading(false);
@@ -41,6 +44,7 @@ export default function Simulator() {
       })
       .catch(err => {
         console.error("Simulation failed", err);
+        alert(`Analysis failed: ${err.message}`);
         setLoading(false);
       });
   };
@@ -53,7 +57,10 @@ export default function Simulator() {
     
     // Call the NEW simulate-upload endpoint
     fetch(`http://localhost:5000/api/simulate-upload/${uploadData.sessionId}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return res.json().then(e => { throw new Error(e.error || "Simulation failed") });
+        return res.json();
+      })
       .then(data => {
         setSimulationData(data);
         setLoading(false);
@@ -61,6 +68,7 @@ export default function Simulator() {
       })
       .catch(err => {
         console.error("Upload simulation failed", err);
+        alert(`Geospatial Analysis Error: ${err.message}`);
         setLoading(false);
       });
   };
