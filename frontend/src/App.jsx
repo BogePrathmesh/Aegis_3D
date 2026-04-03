@@ -50,7 +50,8 @@ export default function App() {
 
       <main className="main-content" style={{ marginTop: '24px' }}>
         {/* ── Module Routing ── */}
-        {appMode === 'budget' ? <BudgetOptimizer /> : <Simulator />}
+        {appMode === 'budget' && <BudgetOptimizer />}
+        {appMode === 'simulation' && <Simulator />}
       </main>
     </div>
   );

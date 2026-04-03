@@ -96,9 +96,82 @@ export default function Simulator() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginTop: 12 }}>
       
+      {/* INITIAL STATE: VISUAL GALLERY */}
+      {!simulationData && !loading && !showUpload && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto' }}>
+            <h2 style={{ fontFamily: 'Orbitron', fontSize: 24, marginBottom: 8, color: 'var(--accent-cyan)' }}>SELECT ASSET FOR ANALYSIS</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Choose an infrastructure asset from the registry to begin the deep-growth degradation simulation.</p>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+            {structures.map(s => (
+              <div 
+                key={s.id} 
+                className="glass-card" 
+                onClick={() => runSimulation(s.id)}
+                style={{ 
+                  padding: '24px', 
+                  cursor: 'pointer', 
+                  background: 'rgba(13, 21, 40, 0.4)', 
+                  border: '1px solid var(--border)',
+                  borderRadius: 20,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                     {s.structure_type === 'Bridge' ? '🌉' : s.structure_type === 'Road' ? '🛣️' : '🏢'}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Health Score</div>
+                    <div style={{ fontFamily: 'Orbitron', fontSize: 18, color: s.health_score > 60 ? 'var(--health-green)' : 'var(--health-orange)' }}>{Math.round(s.health_score)}</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 16, color: '#fff' }}>{s.structure_name}</h4>
+                  <div style={{ fontSize: 11, color: 'var(--accent-blue)', marginTop: 2 }}>{s.structure_type} · {s.location}</div>
+                </div>
+                <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>PRIORITY: <b>{Math.round(s.priority_score)}</b></span>
+                   <span style={{ fontSize: 10, color: 'var(--accent-cyan)', fontWeight: 800 }}>RUN SIMULATION →</span>
+                </div>
+              </div>
+            ))}
+            
+            {/* UPLOAD CARD */}
+            <div 
+              className="glass-card" 
+              onClick={() => setShowUpload(true)}
+              style={{ 
+                padding: '24px', 
+                cursor: 'pointer', 
+                background: 'rgba(0, 212, 255, 0.05)', 
+                border: '1px dashed var(--accent-cyan)',
+                borderRadius: 20,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                minHeight: 180
+              }}
+            >
+              <div style={{ fontSize: 32 }}>📤</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent-cyan)' }}>UPLOAD RAW FOOTAGE</div>
+              <div style={{ fontSize: 10, color: 'rgba(0,212,255,0.6)', textAlign: 'center' }}>Process new inspections using AI crack detector</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showUpload && !simulationData && !loading && (
         <div style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+               <button onClick={() => setShowUpload(false)} className="btn-secondary" style={{ borderRadius: 20 }}>← BACK TO REGISTRY</button>
+            </div>
            <ImageUpload onImageLoaded={handleUploadComplete} />
         </div>
       )}
@@ -164,6 +237,9 @@ export default function Simulator() {
 
           {/* RIGHT: METRICS PANEL */}
           <div style={{ width: 340, flexShrink: 0 }}>
+            <div style={{ marginBottom: 16 }}>
+               <button onClick={() => setSimulationData(null)} className="btn-secondary" style={{ width: '100%', borderRadius: 12, border: '1px solid var(--border)' }}>← EXIT SIMULATION</button>
+            </div>
             <AssetHealthDashboard data={simulationData.yearly_data[year]} />
           </div>
         </div>

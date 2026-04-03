@@ -204,6 +204,7 @@ def optimize_budget_endpoint():
     budget = float(data.get("budget", 50))
     result = budget_db.optimize_budget(budget)
     return jsonify(result)
+    
 
 import simulation_engine
 
