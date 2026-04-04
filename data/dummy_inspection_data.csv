@@ -1,0 +1,36 @@
+inspection_id,timestamp,structure_type,structure_age,is_seismic,is_near_sea,has_heavy_traffic,crack_count,max_width_mm,total_area_pct,estimated_depth_mm,health_score,severity_index,risk_level,latitude,longitude,recommendation
+INSP-001,02-12-2025 21:00,Bridge,19,FALSE,FALSE,FALSE,25,2.46,1.42,9.58,72.4,35.9,Low,10.07089,73.48502,Continue routine bi-annual maintenance. No action needed.
+INSP-002,12-03-2026 02:00,Building,11,FALSE,TRUE,TRUE,39,0.25,0.23,0.89,78.8,44.1,High,22.28524,75.41404,Continue routine bi-annual maintenance. No action needed.
+INSP-003,26-11-2025 16:00,Road,25,TRUE,FALSE,TRUE,0,0,0,0,100,0,Safe,22.01532,72.53282,Continue routine bi-annual maintenance. No action needed.
+INSP-004,06-11-2025 08:00,Building,100,TRUE,FALSE,FALSE,39,0.25,0.23,0.89,78.8,44.1,High,20.24061,76.95244,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-005,12-04-2025 05:00,Road,13,FALSE,FALSE,FALSE,7,3.35,0.6,13.15,78.5,21.5,Low,26.90662,71.7499,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-006,20-09-2025 02:00,Bridge,4,FALSE,TRUE,FALSE,42,0.77,0.61,2.21,73.9,31.3,Low,16.90312,69.8229,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-007,29-01-2026 13:00,Bridge,57,FALSE,TRUE,FALSE,24,1.84,1.08,7.64,76.6,44.9,High,19.48866,80.03163,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-008,10-05-2025 14:00,Bridge,28,FALSE,FALSE,FALSE,25,0.79,1.41,2.52,80.7,25.1,Low,19.23067,67.7417,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-009,03-03-2025 03:00,Bridge,50,FALSE,FALSE,FALSE,25,2.46,1.42,9.58,72.4,35.9,Low,16.53523,67.46468,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-010,04-02-2026 07:00,Road,48,FALSE,FALSE,FALSE,38,0.58,1.45,1.44,75.2,32.2,Low,15.92404,65.67139,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-011,11-05-2025 20:00,Building,45,FALSE,FALSE,TRUE,15,0.17,1.62,0.71,88.4,17.3,Safe,11.61569,76.21107,Continue routine bi-annual maintenance. No action needed.
+INSP-012,06-05-2025 20:00,Bridge,28,FALSE,TRUE,TRUE,30,1.49,1.79,5.41,74,45.6,High,27.53081,80.63648,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-013,21-02-2026 00:00,Bridge,25,FALSE,FALSE,FALSE,45,1.05,1.8,2.79,68.7,40.7,High,22.36338,73.26807,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-014,27-08-2025 12:00,Building,25,FALSE,FALSE,FALSE,45,1.05,1.8,2.79,68.7,40.7,High,23.13376,80.04348,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-015,06-11-2025 08:00,Road,85,TRUE,FALSE,FALSE,27,0.82,1.81,2.36,78.8,44.1,High,15.12971,81.89629,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-016,15-01-2025 00:00,Road,5,FALSE,FALSE,FALSE,31,4.35,2.23,10.23,58.3,41.7,High,20.32856,72.40264,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-017,28-11-2025 06:00,Road,9,TRUE,TRUE,FALSE,15,2.52,2.32,10.19,75.3,37.1,Low,13.15086,79.04213,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-018,08-01-2025 11:00,Road,63,FALSE,FALSE,TRUE,39,3.79,2.34,10.06,56.9,79.3,Critical,27.70965,73.08003,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-019,26-08-2025 03:00,Bridge,62,TRUE,FALSE,FALSE,28,4.69,2.5,16.08,57.5,88.4,Critical,19.98694,68.40681,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-020,26-08-2025 16:00,Bridge,66,FALSE,FALSE,FALSE,28,4.69,2.5,16.08,57.5,88.4,Critical,12.17725,71.40266,Continue routine bi-annual maintenance. No action needed.
+INSP-021,14-08-2025 14:00,Building,95,FALSE,FALSE,FALSE,34,2.14,2.64,5.01,67,52.8,High,20.13927,65.59033,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-022,27-10-2025 04:00,Road,43,FALSE,FALSE,FALSE,8,4.56,2.85,8.43,67.5,42.2,High,17.44974,68.55128,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-023,27-08-2025 03:00,Building,38,FALSE,FALSE,TRUE,42,1.11,3.01,4.31,67.4,48.7,High,11.43748,83.74118,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-024,10-03-2025 05:00,Bridge,33,FALSE,FALSE,FALSE,1,12.44,3.27,18.81,30.8,90,Critical,21.46495,75.21794,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-025,18-02-2026 05:00,Building,56,FALSE,FALSE,TRUE,7,3.55,3.29,14.73,72.2,51.2,High,17.19329,80.3444,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-026,19-10-2025 05:00,Building,30,FALSE,TRUE,FALSE,35,0.27,3.36,1.01,74.4,39.9,Low,27.89568,70.33659,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-027,03-07-2025 00:00,Building,78,FALSE,TRUE,FALSE,32,0.36,3.49,0.82,75.2,47.6,High,27.59918,79.11114,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-028,07-10-2025 14:00,Road,51,TRUE,FALSE,FALSE,39,0.15,3.62,0.52,72.5,57.2,High,25.90155,65.93009,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-029,17-06-2025 17:00,Building,96,FALSE,FALSE,FALSE,26,5.77,3.73,12.23,50.7,78.9,Critical,25.93097,68.72031,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-030,11-04-2025 23:00,Building,78,TRUE,FALSE,TRUE,48,3.57,4.26,13.62,49.6,100,Critical,14.10223,66.87742,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-031,13-08-2025 06:00,Building,31,FALSE,FALSE,FALSE,19,0.47,4.48,1.73,79.2,27,Low,24.65875,82.43952,Hairline cracks detected. Monitor in next inspection cycle (6 months).
+INSP-032,04-05-2025 02:00,Road,23,FALSE,FALSE,TRUE,35,1.07,4.58,2.24,68,47.8,High,24.89319,67.72176,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-033,02-02-2025 18:00,Building,95,FALSE,FALSE,FALSE,32,1.07,4.95,4.01,68.8,49.9,High,14.21489,81.74814,Severe cracking. Structural reinforcement or resin injection required within 30 days.
+INSP-034,12-02-2025 20:00,Building,72,FALSE,TRUE,TRUE,50,4.36,6.69,7.84,39.8,100,Critical,10.40481,83.34938,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.
+INSP-035,02-01-2025 19:00,Building,15,FALSE,FALSE,TRUE,40,9.75,7.2,35.01,16.8,95.7,Critical,28.04368,65.45833,EMERGENCY: Excessive fracture width. Evacuate and close structure immediately.

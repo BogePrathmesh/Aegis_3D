@@ -1,0 +1,6 @@
+data/uploads/
+models/crack_detection/weights/
+*.pt
+*.zip
+*.pdf
+__pycache__/
