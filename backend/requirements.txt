@@ -9,3 +9,5 @@ pandas
 scikit-image
 ultralytics
 Pillow
+torch
+torchvision

@@ -1,6 +1,40 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.pytest_cache/
+
+# Uploads & Generated data
 data/uploads/
+**/data/uploads/
+backend/data/uploads/
+backend/data/simulation_frames/
+backend/data/masks/
+backend/data/depth/
+backend/reports/
+reports/
+
+# Models & Weights
 models/crack_detection/weights/
+backend/models/crack_detection/weights/
 *.pt
 *.zip
 *.pdf
-__pycache__/
+
+# Temp / Log / Test artifacts
+backend/backend/
+*.log
+metric_output.txt
+uvicorn_output.txt
+backend/uvicorn_output.txt
+backend/test_annotated_sample.jpg
+
+# Node
+node_modules/
+dist/

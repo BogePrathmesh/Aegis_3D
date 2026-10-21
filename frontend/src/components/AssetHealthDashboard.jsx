@@ -15,9 +15,9 @@ const getStatusLabel = (risk) => {
 };
 
 export default function AssetHealthDashboard({ data }) {
-  const { 
-    health, risk, failure_probability, 
-    crack_length, crack_width, crack_depth, severity 
+  const {
+    health, risk, failure_probability,
+    crack_length, crack_width, crack_depth, severity
   } = data;
 
   const statusColor = getStatusColor(risk);
@@ -30,10 +30,10 @@ export default function AssetHealthDashboard({ data }) {
 
   return (
     <div className="health-dashboard-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      
+
       {/* SECTION 1: INTEGRITY OVERVIEW */}
-      <div className="glass-card" style={{ 
-        padding: '24px', 
+      <div className="glass-card" style={{
+        padding: '24px',
         border: '1px solid rgba(255,255,255,0.12)',
         background: '#0d1528',
         backdropFilter: 'blur(20px)',
@@ -42,46 +42,46 @@ export default function AssetHealthDashboard({ data }) {
         overflow: 'hidden',
         boxShadow: '0 20px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1)'
       }}>
-        <div style={{ 
-          position: 'absolute', 
-          top: 0, right: 0, 
-          width: '100px', height: '100px', 
+        <div style={{
+          position: 'absolute',
+          top: 0, right: 0,
+          width: '100px', height: '100px',
           background: `radial-gradient(circle, ${statusColor}15 0%, transparent 70%)`,
           pointerEvents: 'none'
         }} />
 
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', fontWeight: 800, letterSpacing: '2px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColor, boxShadow: `0 0 10px ${statusColor}` }} />
-           STRUCTURAL HEALTH
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColor, boxShadow: `0 0 10px ${statusColor}` }} />
+          STRUCTURAL HEALTH
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
           {/* Circular Gauge */}
           <div style={{ position: 'relative', width: '100px', height: '100px' }}>
             <svg width="100" height="100" viewBox="0 0 100 100">
-              <circle 
-                cx="50" cy="50" r={radius} 
-                fill="none" stroke="rgba(255,255,255,0.05)" 
-                strokeWidth="8" 
+              <circle
+                cx="50" cy="50" r={radius}
+                fill="none" stroke="rgba(255,255,255,0.05)"
+                strokeWidth="8"
               />
-              <circle 
-                cx="50" cy="50" r={radius} 
-                fill="none" stroke={statusColor} 
-                strokeWidth="8" 
+              <circle
+                cx="50" cy="50" r={radius}
+                fill="none" stroke={statusColor}
+                strokeWidth="8"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
-                style={{ 
+                style={{
                   transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                   filter: `drop-shadow(0 0 8px ${statusColor}80)`
                 }}
                 transform="rotate(-90 50 50)"
               />
             </svg>
-            <div style={{ 
-              position: 'absolute', inset: 0, 
-              display: 'flex', flexDirection: 'column', 
-              alignItems: 'center', justifyContent: 'center' 
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center'
             }}>
               <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '24px', fontWeight: 900, color: '#fff' }}>
                 {Math.round(health)}
@@ -97,13 +97,13 @@ export default function AssetHealthDashboard({ data }) {
                 {risk.toFixed(1)}%
               </div>
             </div>
-            <div style={{ 
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              background: `${statusColor}15`, 
-              color: statusColor, 
-              fontSize: '11px', 
-              fontWeight: 800, 
+            <div style={{
+              padding: '6px 12px',
+              borderRadius: '8px',
+              background: `${statusColor}15`,
+              color: statusColor,
+              fontSize: '11px',
+              fontWeight: 800,
               textAlign: 'center',
               border: `1px solid ${statusColor}30`,
               letterSpacing: '1px'
@@ -115,8 +115,8 @@ export default function AssetHealthDashboard({ data }) {
       </div>
 
       {/* SECTION 2: FAILURE PROBABILITY */}
-      <div className="glass-card" style={{ 
-        padding: '20px', 
+      <div className="glass-card" style={{
+        padding: '20px',
         background: 'rgba(13, 21, 40, 0.3)',
         borderRadius: '20px',
         border: '1px solid rgba(255,255,255,0.05)'
@@ -126,9 +126,9 @@ export default function AssetHealthDashboard({ data }) {
           <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', fontWeight: 800, color: '#ef4444' }}>{failure_probability.toFixed(1)}%</span>
         </div>
         <div style={{ height: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '5px', overflow: 'hidden' }}>
-          <div style={{ 
-            width: `${failure_probability}%`, 
-            height: '100%', 
+          <div style={{
+            width: `${failure_probability}%`,
+            height: '100%',
             background: 'linear-gradient(90deg, #f59e0b, #ef4444)',
             transition: 'width 1s ease-out',
             boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
@@ -138,17 +138,17 @@ export default function AssetHealthDashboard({ data }) {
 
       {/* SECTION 3: GEOMETRIC DELTA GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <MetricTile label="Crack Length" value={crack_length.toFixed(1)} unit="px" color="#3d8bff" icon="📏" />
-        <MetricTile label="Crack Width" value={crack_width.toFixed(2)} unit="mm" color="#00d4ff" icon="↔️" />
-        <MetricTile label="Crack Depth" value={crack_depth.toFixed(2)} unit="mm" color="#7c3aed" icon="⬇️" />
-        <MetricTile label="Severity" value={severity.toFixed(2)} unit="/ 5" color="#f59e0b" icon="⚠️" />
+        <MetricTile label="Crack Length" value={crack_length.toFixed(1)} unit="px" color="#000000" icon="📏" />
+        <MetricTile label="Crack Width" value={crack_width.toFixed(2)} unit="mm" color="#000000" icon="↔️" />
+        <MetricTile label="Crack Depth" value={crack_depth.toFixed(2)} unit="mm" color="#000000" icon="⬇️" />
+        <MetricTile label="Severity" value={severity.toFixed(2)} unit="/ 5" color="#000000" icon="⚠️" />
       </div>
 
       {/* SECTION 4: AI FORECAST HINT */}
-      <div style={{ 
-        padding: '12px', 
-        borderRadius: '12px', 
-        background: 'rgba(61, 139, 255, 0.05)', 
+      <div style={{
+        padding: '12px',
+        borderRadius: '12px',
+        background: 'rgba(61, 139, 255, 0.05)',
         border: '1px dashed rgba(61, 139, 255, 0.2)',
         fontSize: '11px',
         color: 'rgba(61, 139, 255, 0.8)',
@@ -163,10 +163,10 @@ export default function AssetHealthDashboard({ data }) {
 
 function MetricTile({ label, value, unit, color, icon }) {
   return (
-    <div className="glass-card" style={{ 
-      padding: '16px 12px', 
-      background: 'rgba(255,255,255,0.02)', 
-      border: '1px solid rgba(255,255,255,0.05)', 
+    <div className="glass-card" style={{
+      padding: '16px 12px',
+      background: 'rgba(255,255,255,0.02)',
+      border: '1px solid rgba(255,255,255,0.05)',
       borderRadius: '16px',
       display: 'flex',
       flexDirection: 'column',
@@ -175,7 +175,7 @@ function MetricTile({ label, value, unit, color, icon }) {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span style={{ fontSize: '10px' }}>{icon}</span>
-        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
+        <span style={{ fontSize: '11px', color: 'rgba(0, 0, 0, 0.65)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
       </div>
       <div>
         <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '18px', fontWeight: 700, color: color }}>{value}</span>

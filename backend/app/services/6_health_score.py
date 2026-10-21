@@ -29,60 +29,87 @@ def compute_health_score(
     max_crack_width_px: float,
     crack_count: int,
     worst_crack_type: str = "structural",
+    structure_type: str = "building",
+    material_type: str = "concrete",
+    img_diagonal_px: float = 1000.0,
 ) -> HealthReport:
     """
     Compute structural health score from summary metrics.
+    Harmonized with the heuristic in 5_inference.py.
 
-    Args:
-        total_crack_area_pct: sum of all crack areas as % of image
-        max_crack_width_px:   widest crack in pixels
-        crack_count:          number of detected cracks
-        worst_crack_type:     most severe type found
-
-    Returns:
-        HealthReport with score, level, and sub-scores
+    This is a SCREENING HEURISTIC, not a validated engineering assessment.
+    max_crack_width_px is normalized to image diagonal to be scale-invariant.
+    img_diagonal_px should be sqrt(img_h^2 + img_w^2) of the analyzed image.
     """
-    area_score = max(0, 100 - total_crack_area_pct * 8)
-    width_score = max(0, 100 - max_crack_width_px * 1.5)
-    density_score = max(0, 100 - crack_count * 10)
+    if total_crack_area_pct <= 0.0 and max_crack_width_px <= 0.0 and crack_count == 0:
+        return HealthReport(
+            health_score=100.0,
+            risk_level="Safe",
+            area_score=0.0,
+            width_score=0.0,
+            density_score=0.0,
+            type_score=0.0,
+        )
 
-    type_weights = {
-        "hairline":     0.1,
-        "longitudinal": 0.3,
-        "transverse":   0.4,
-        "structural":   0.6,
-        "alligator":    0.8,
+    p_cov = min(40.0, total_crack_area_pct * 8.0)
+    # Normalize width to % of image diagonal (scale-invariant)
+    norm_width_pct = (max_crack_width_px / max(img_diagonal_px, 1.0)) * 100.0
+    p_width = min(30.0, norm_width_pct * 6.0)
+    p_count = min(15.0, crack_count * 2.5)
+
+    type_penalties = {
+        "hairline": 2.0,
+        "longitudinal": 6.0,
+        "transverse": 8.0,
+        "structural": 12.0,
+        "alligator": 15.0,
     }
-    tw = type_weights.get(worst_crack_type, 0.5)
-    type_score = 100 * (1 - tw)
+    p_type = type_penalties.get(worst_crack_type.lower(), 5.0)
 
-    score = (
-        area_score    * 0.40
-        + width_score * 0.30
-        + density_score * 0.20
-        + type_score  * 0.10
-    )
-    score = round(max(0, min(100, score)), 1)
+    p_damage = p_cov + p_width + p_count + p_type
 
-    # Risk level
-    if score >= 85:
-        level = "Safe"
-    elif score >= 70:
-        level = "Low"
-    elif score >= 50:
-        level = "Medium"
-    elif score >= 30:
-        level = "High"
-    else:
+    struct_multipliers = {
+        "bridge": 1.20,
+        "dam": 1.25,
+        "building": 1.00,
+        "road": 0.85,
+    }
+    sm = struct_multipliers.get(structure_type.lower(), 1.00)
+
+    mat_multipliers = {
+        "brick_masonry": 1.20,
+        "masonry": 1.20,
+        "concrete": 1.00,
+        "stone": 1.10,
+        "asphalt": 0.85,
+        "plaster": 0.70,
+        "unknown": 1.00,
+    }
+    mm = mat_multipliers.get(material_type.lower(), 1.00)
+
+    total_penalty = p_damage * sm * mm
+    score = round(max(0.0, min(100.0, 100.0 - total_penalty)), 1)
+
+    # Risk level consistent with SSI/Integrity mapping
+    ssi_equiv = 100.0 - score
+    if ssi_equiv >= 80.0:
         level = "Critical"
+    elif ssi_equiv >= 65.0:
+        level = "High"
+    elif ssi_equiv >= 40.0:
+        level = "Medium"
+    elif ssi_equiv >= 20.0:
+        level = "Low"
+    else:
+        level = "Safe"
 
     return HealthReport(
         health_score=score,
         risk_level=level,
-        area_score=round(area_score, 1),
-        width_score=round(width_score, 1),
-        density_score=round(density_score, 1),
-        type_score=round(type_score, 1),
+        area_score=round(p_cov, 1),
+        width_score=round(p_width, 1),
+        density_score=round(p_count, 1),
+        type_score=round(p_type, 1),
     )
 
 

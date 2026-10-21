@@ -27,7 +27,7 @@ def list_structures():
             "age_years":      s.age_years,
             "traffic_level":  s.traffic_level.value,
             "defect_count":   len(insp.defects),
-            "max_severity":   max(d.severity_score for d in insp.defects),
+            "max_severity":   max((d.severity_score for d in insp.defects), default=0),
             "inspection_date": insp.inspection_date,
         })
     return result
