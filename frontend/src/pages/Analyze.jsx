@@ -246,6 +246,84 @@ const Analyze = () => {
     const [stitchStatus, setStitchStatus]   = useState('');
     const [showYoloBoxes, setShowYoloBoxes] = useState(true);
 
+    // ── Email report notification state ───────────────────────────────────
+    const [uploadedFile, setUploadedFile]       = useState(null);
+    const [emailChecked, setEmailChecked]       = useState(false);
+    const [emailSending, setEmailSending]       = useState(false);
+    const [emailStatus, setEmailStatus]         = useState(null);
+    const [recipientEmail, setRecipientEmail]   = useState('aimhighpa@gmail.com');
+
+    useEffect(() => {
+        fetch('/api/analysis/email-config')
+            .then(res => res.json())
+            .then(data => {
+                if (data.recipient) setRecipientEmail(data.recipient);
+            })
+            .catch(() => {
+                setRecipientEmail('aimhighpa@gmail.com');
+            });
+    }, []);
+
+    const handleSendEmail = async () => {
+        if (emailSending || !result) return;
+        setEmailSending(true);
+        setEmailStatus(null);
+
+        const payload = {
+            filename: result.filename || uploadedFile?.name || 'inspection_scan.jpg',
+            structure_type: structureType,
+            material_type: activeMaterialType,
+            material_source: activeMaterialSource,
+            health_score: activeHealthScore,
+            severity_index: activeSeverityIndex,
+            risk_level: activeRiskLevel,
+            crack_count: result.crack_count,
+            total_crack_area_pct: result.total_crack_area_pct,
+            max_crack_width: result.max_crack_width,
+            calibration_status: result.calibration_status,
+            max_crack_width_mm: result.max_crack_width_mm,
+            cracks: result.cracks || [],
+            recommendations: activeRecommendations,
+            latitude: result.latitude,
+            longitude: result.longitude,
+            gps_status: result.gps_status,
+            annotated_image_b64: result.annotated_image_b64 || result.orthomosaic_b64,
+        };
+
+        const formData = new FormData();
+        if (uploadedFile) {
+            formData.append('file', uploadedFile);
+        }
+        formData.append('report_data', JSON.stringify(payload));
+        formData.append('attach_pdf', 'true');
+
+        try {
+            const response = await fetch('/api/analysis/email-report', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.detail || 'Failed to transmit inspection report email.');
+            }
+
+            setEmailStatus({
+                type: 'success',
+                message: `Inspection report successfully sent to ${data.recipient || recipientEmail}.`,
+                attachments: data.attachments || [],
+                timestamp: data.timestamp,
+            });
+        } catch (err) {
+            setEmailStatus({
+                type: 'error',
+                message: err.message || 'Error transmitting email report.',
+            });
+        } finally {
+            setEmailSending(false);
+        }
+    };
+
     const runSimulation = () => {
         setIsSimulating(true);
         setSimProgress(0);
@@ -271,6 +349,9 @@ const Analyze = () => {
         setError(null);
         setResult(null);
         setStitchStatus('');
+        setUploadedFile(file);
+        setEmailChecked(false);
+        setEmailStatus(null);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -308,6 +389,9 @@ const Analyze = () => {
         setError(null);
         setResult(null);
         setStitchStatus(`Stitching ${batchFiles.length} images…`);
+        setUploadedFile(batchFiles[0] || null);
+        setEmailChecked(false);
+        setEmailStatus(null);
 
         const formData = new FormData();
         batchFiles.forEach(f => formData.append('files', f));
@@ -333,6 +417,9 @@ const Analyze = () => {
         setError(null);
         setResult(null);
         setStitchStatus('Extracting & stitching ZIP archive…');
+        setUploadedFile(file);
+        setEmailChecked(false);
+        setEmailStatus(null);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -724,7 +811,7 @@ const Analyze = () => {
                             </div>
                         )}
 
-                        <button onClick={() => { setResult(null); setBatchFiles([]); setStitchStatus(''); }} className="py-4 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition-colors">
+                        <button onClick={() => { setResult(null); setBatchFiles([]); setStitchStatus(''); setUploadedFile(null); setEmailChecked(false); setEmailStatus(null); }} className="py-4 w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition-colors">
                             Process New Asset
                         </button>
                     </div>
@@ -870,6 +957,74 @@ const Analyze = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* ── Email Inspection Report Card ── */}
+                            <div>
+                                <div className="label-sm text-slate-400 border-b border-slate-100 pb-2 mb-4">Inspection Dispatch</div>
+                                <div className="bg-slate-50 p-4 rounded-lg space-y-3 border border-slate-200/80">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-500 font-semibold">Recipient</span>
+                                        <span className="font-mono font-bold text-xs text-primary">{recipientEmail}</span>
+                                    </div>
+
+                                    <label className="flex items-start gap-2.5 cursor-pointer text-xs font-semibold text-slate-700 select-none bg-white p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            id="email-report-checkbox"
+                                            className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer"
+                                            checked={emailChecked}
+                                            onChange={(e) => {
+                                                setEmailChecked(e.target.checked);
+                                                if (!e.target.checked) setEmailStatus(null);
+                                            }}
+                                        />
+                                        <span>Email this inspection report to AIM HIGH</span>
+                                    </label>
+
+                                    {emailChecked && (
+                                        <div>
+                                            <button
+                                                onClick={handleSendEmail}
+                                                disabled={emailSending}
+                                                id="send-report-btn"
+                                                className="w-full py-2.5 px-4 bg-primary hover:bg-primary/95 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">
+                                                    {emailSending ? 'sync' : 'send'}
+                                                </span>
+                                                {emailSending ? 'Transmitting Report...' : 'Send Report'}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Success confirmation */}
+                                    {emailStatus?.type === 'success' && (
+                                        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs animate-fade-in">
+                                            <div className="flex items-center gap-1.5 font-bold mb-1">
+                                                <span className="material-symbols-outlined text-[16px] text-emerald-600">check_circle</span>
+                                                Report Sent
+                                            </div>
+                                            <div className="leading-snug">{emailStatus.message}</div>
+                                            {emailStatus.attachments?.length > 0 && (
+                                                <div className="text-[10px] text-emerald-700 mt-1.5 pt-1 border-t border-emerald-200 font-mono">
+                                                    Attached: {emailStatus.attachments.join(', ')}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Error notification */}
+                                    {emailStatus?.type === 'error' && (
+                                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg text-xs animate-fade-in">
+                                            <div className="flex items-center gap-1.5 font-bold mb-1">
+                                                <span className="material-symbols-outlined text-[16px] text-rose-600">error</span>
+                                                Send Failed
+                                            </div>
+                                            <div className="leading-snug">{emailStatus.message}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
                             <div>
                                 <div className="label-sm text-slate-400 border-b border-slate-100 pb-2 mb-4">Engineering Notes</div>

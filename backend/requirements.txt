@@ -11,3 +11,5 @@ ultralytics
 Pillow
 torch
 torchvision
+python-dotenv
+

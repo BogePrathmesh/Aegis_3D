@@ -2,9 +2,10 @@ import os
 import base64
 import importlib
 import csv
+import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 import cv2
 import numpy as np
@@ -332,3 +333,101 @@ async def analyze_batch(
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
     return {"results": results, "total": len(results)}
+
+
+# ─── Email Notification Endpoints ──────────────────
+from app.services.email_service import (
+    send_inspection_report_email,
+    EmailConfigError,
+    EmailSendError,
+    get_email_config,
+    CONFIGURED_RECIPIENT,
+)
+
+class EmailReportPayload(BaseModel):
+    report_data: Dict[str, Any]
+    image_b64: Optional[str] = None
+    image_filename: Optional[str] = None
+    attach_pdf: Optional[bool] = True
+
+@router.get("/email-config")
+def get_email_status():
+    """Returns recipient address and configuration state without exposing credentials."""
+    try:
+        config = get_email_config()
+        return {
+            "configured": True,
+            "recipient": config["recipient"]
+        }
+    except EmailConfigError as e:
+        return {
+            "configured": False,
+            "recipient": CONFIGURED_RECIPIENT,
+            "error": str(e)
+        }
+
+@router.post("/email-report")
+async def email_report_multipart(
+    file: Optional[UploadFile] = File(None),
+    report_data: str = Form(...),
+    attach_pdf: bool = Form(True)
+):
+    """
+    Sends inspection report email to aimhighpa@gmail.com with optional image and PDF attachments.
+    """
+    try:
+        parsed_data = json.loads(report_data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid report_data JSON payload: {e}")
+
+    image_bytes = None
+    image_filename = None
+    if file:
+        image_bytes = await file.read()
+        image_filename = file.filename
+    elif parsed_data.get("annotated_image_b64") or parsed_data.get("orthomosaic_b64"):
+        raw_b64 = parsed_data.get("annotated_image_b64") or parsed_data.get("orthomosaic_b64")
+        try:
+            image_bytes = base64.b64decode(raw_b64)
+            image_filename = f"annotated_{parsed_data.get('filename', 'inspection.jpg')}"
+        except Exception:
+            pass
+
+    try:
+        return send_inspection_report_email(
+            report_data=parsed_data,
+            image_bytes=image_bytes,
+            image_filename=image_filename,
+            attach_pdf=attach_pdf
+        )
+    except EmailConfigError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except EmailSendError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error sending email: {e}")
+
+@router.post("/email-report/json")
+def email_report_json(payload: EmailReportPayload):
+    """JSON variant of email-report for programmatic/headless requests."""
+    image_bytes = None
+    if payload.image_b64:
+        try:
+            image_bytes = base64.b64decode(payload.image_b64)
+        except Exception:
+            pass
+
+    try:
+        return send_inspection_report_email(
+            report_data=payload.report_data,
+            image_bytes=image_bytes,
+            image_filename=payload.image_filename,
+            attach_pdf=payload.attach_pdf if payload.attach_pdf is not None else True
+        )
+    except EmailConfigError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except EmailSendError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error sending email: {e}")
+
